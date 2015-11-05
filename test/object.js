@@ -4,6 +4,8 @@ var config = require('./config'),
   uuid = require('node-uuid'),
   should = require('should'),
   OSS = require('..'),
+  http = require('http'),
+  url = require('url'),
   fs = require('fs');
 
 var oss = new OSS.createClient(config);
@@ -172,6 +174,36 @@ describe('# put object by buffer', function() {
       res.objectUrl.should.equal('http://' + bucket + '.' + config.host + '/' + object);
       done();
     });
+  });
+
+  it('put with getSignedUrl', function(done) {
+    var urlObj = oss.getSignedUrl({
+      method: 'PUT',
+      bucket: bucket,
+      object: object,
+      headers: {},
+    });
+
+    var options = Object.assign(url.parse(urlObj.url), {
+      headers: urlObj.headers,
+      method: 'PUT',
+    });
+
+    var req = http.request(options, function(res) {
+      res.statusCode.should.equal(200);
+      res.on('data', function() {});
+      res.on('end', function() {
+        done();
+      });
+    });
+
+    req.on('error', function(e) {
+      should.not.exist(e);
+      done();
+    });
+
+    req.write('hello,wolrd', 'utf8');
+    req.end();
   });
 
   it('get object no dest', function(done) {
