@@ -46,7 +46,7 @@ describe('# object', function() {
       source: '/xxoo'
     }, function(error, res) {
       should.not.exist(res);
-      error.message.should.equal('ENOENT, stat \'/xxoo\'');
+      error.message.should.match(/ENOENT.*, stat '\/xxoo'/);
       done();
     });
   });
