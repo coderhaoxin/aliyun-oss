@@ -4,6 +4,8 @@ var config = require('./config'),
   uuid = require('node-uuid'),
   should = require('should'),
   OSS = require('..'),
+  http = require('http'),
+  url = require('url'),
   fs = require('fs');
 
 var oss = new OSS.createClient(config);
@@ -34,7 +36,7 @@ describe('# object', function() {
     }, function(error, res) {
       should.not.exist(error);
       res.status.should.equal(200);
-      res.objectUrl.should.equal('http://' + bucket + '.oss-cn-hangzhou.aliyuncs.com/' + object);
+      res.objectUrl.should.equal('http://' + bucket + '.' + config.host + '/' + object);
       done();
     });
   });
@@ -46,7 +48,7 @@ describe('# object', function() {
       source: '/xxoo'
     }, function(error, res) {
       should.not.exist(res);
-      error.message.should.equal('ENOENT, stat \'/xxoo\'');
+      error.message.should.match(/ENOENT.*, stat '\/xxoo'/);
       done();
     });
   });
@@ -169,9 +171,39 @@ describe('# put object by buffer', function() {
     }, function(error, res) {
       should.not.exist(error);
       res.status.should.equal(200);
-      res.objectUrl.should.equal('http://' + bucket + '.oss-cn-hangzhou.aliyuncs.com/' + object);
+      res.objectUrl.should.equal('http://' + bucket + '.' + config.host + '/' + object);
       done();
     });
+  });
+
+  it('put with getSignedUrl', function(done) {
+    var urlObj = oss.getSignedUrl({
+      method: 'PUT',
+      bucket: bucket,
+      object: object,
+      headers: {},
+    });
+
+    var options = Object.assign(url.parse(urlObj.url), {
+      headers: urlObj.headers,
+      method: 'PUT',
+    });
+
+    var req = http.request(options, function(res) {
+      res.statusCode.should.equal(200);
+      res.on('data', function() {});
+      res.on('end', function() {
+        done();
+      });
+    });
+
+    req.on('error', function(e) {
+      should.not.exist(e);
+      done();
+    });
+
+    req.write('hello,wolrd', 'utf8');
+    req.end();
   });
 
   it('get object no dest', function(done) {
@@ -234,7 +266,7 @@ describe('# put object by buffer', function() {
     }, function(error, res) {
       should.not.exist(error);
       res.status.should.equal(200);
-      res.objectUrl.should.equal('http://' + bucket + '.oss-cn-hangzhou.aliyuncs.com/' + name);
+      res.objectUrl.should.equal('http://' + bucket + '.' + config.host + '/' + name);
       done();
     });
   });
@@ -301,7 +333,7 @@ describe('# put object by stream', function() {
     }, function(error, res) {
       should.not.exist(error);
       res.status.should.equal(200);
-      res.objectUrl.should.equal('http://' + bucket + '.oss-cn-hangzhou.aliyuncs.com/' + object);
+      res.objectUrl.should.equal('http://' + bucket + '.' + config.host + '/' + object);
       done();
     });
   });
@@ -351,7 +383,7 @@ describe('# delete multi object', function() {
     }, function(error, res) {
       should.not.exist(error);
       res.status.should.equal(200);
-      res.objectUrl.should.equal('http://' + bucket + '.oss-cn-hangzhou.aliyuncs.com/' + object1);
+      res.objectUrl.should.equal('http://' + bucket + '.' + config.host + '/' + object1);
       done();
     });
   });
@@ -364,7 +396,7 @@ describe('# delete multi object', function() {
     }, function(error, res) {
       should.not.exist(error);
       res.status.should.equal(200);
-      res.objectUrl.should.equal('http://' + bucket + '.oss-cn-hangzhou.aliyuncs.com/' + object2);
+      res.objectUrl.should.equal('http://' + bucket + '.' + config.host + '/' + object2);
       done();
     });
   });

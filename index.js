@@ -6,6 +6,7 @@ var mime = require('mime-types'),
   Stream = require('stream'),
   xml2js = require('xml2js'),
   http = require('http'),
+  url = require('url'),
   fs = require('fs');
 
 var isArray = Array.isArray;
@@ -50,6 +51,35 @@ OSS.prototype.generateSign = function(req, resource) {
 
   return 'OSS ' + this.accessKeyId + ':' + signature;
 };
+
+/**
+ * @param {object} - options
+ *   required properties: method, bucket, object, headers
+ */
+OSS.prototype.getSignedUrl = function(options) {
+  var headers = Object.assign({}, options.headers);
+  headers['Date'] = new Date().toGMTString();
+
+  // Create a req object with properties expected by helper functions
+  var req = {
+    method: options.method,
+    getHeader: function(key) { return headers[key]; },
+    _headers: headers
+  };
+
+  // Sign headers
+  headers['Authorization'] = this.generateSign(req, getResource(options));
+
+  // Generate URL
+  var urlString = url.format({
+    protocol: 'http:',
+    hostname: options.bucket + '.' + this.host,
+    port: this.port,
+    pathname: getPath(options)
+  });
+
+  return { url: urlString, headers: headers };
+}
 
 /**
  * @param {Request} - req
