@@ -33,7 +33,7 @@ describe('# object', function() {
     }, function(error, res) {
       should.not.exist(error);
       res.status.should.equal(200);
-      res.objectUrl.should.equal('http://' + bucket + '.oss-cn-hangzhou.aliyuncs.com/' + object1);
+      res.objectUrl.should.equal('http://' + bucket + '.' + config.host + '/' + object1);
       done();
     });
   });
@@ -46,7 +46,7 @@ describe('# object', function() {
     }, function(error, res) {
       should.not.exist(error);
       res.status.should.equal(200);
-      res.objectUrl.should.equal('http://' + bucket + '.oss-cn-hangzhou.aliyuncs.com/' + object2);
+      res.objectUrl.should.equal('http://' + bucket + '.' + config.host + '/' + object2);
       done();
     });
   });
@@ -59,7 +59,7 @@ describe('# object', function() {
   //   }, function(error, res) {
   //     should.not.exist(error);
   //     res.status.should.equal(200);
-  //     res.objectUrl.should.equal('http://' + bucket + '.oss-cn-hangzhou.aliyuncs.com/' + object);
+  //     res.objectUrl.should.equal('http://' + bucket + '.' + config.host + '/' + object);
   //     done();
   //   });
   // });
