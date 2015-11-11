@@ -10,7 +10,7 @@ describe('# thunkify', function() {
   var oss = OSS.createClient(config);
 
   it('should list bucket', function() {
-    return co(function * () {
+    return co(function* () {
       var res = yield oss.listBucket();
 
       res.status.should.equal(200);
@@ -24,7 +24,7 @@ describe('# promisify', function() {
   var oss = OSS.createClient(config);
 
   it('should list bucket', function() {
-    return co(function * () {
+    return co(function* () {
       var res = yield oss.listBucket();
 
       res.status.should.equal(200);
