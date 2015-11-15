@@ -176,12 +176,13 @@ describe('# put object by buffer', function() {
     });
   });
 
-  it('put with getSignedUrl', function(done) {
+  it('put with getSignedUrl (sign header)', function(done) {
     var urlObj = oss.getSignedUrl({
       method: 'PUT',
       bucket: bucket,
       object: object,
       headers: {},
+      signHeaders: true,
     });
 
     var options = Object.assign(url.parse(urlObj.url), {
@@ -204,6 +205,71 @@ describe('# put object by buffer', function() {
 
     req.write('hello,wolrd', 'utf8');
     req.end();
+  });
+
+  it('put with getSignedUrl (sign url)', function(done) {
+    var urlObj = oss.getSignedUrl({
+      method: 'PUT',
+      bucket: bucket,
+      object: object,
+      headers: {},
+      signHeaders: false,
+      expires: 60,
+    });
+
+    var options = Object.assign(url.parse(urlObj.url), {
+      headers: urlObj.headers,
+      method: 'PUT',
+    });
+
+    var req = http.request(options, function(res) {
+      res.statusCode.should.equal(200);
+      res.on('data', function() {});
+      res.on('end', function() {
+        done();
+      });
+    });
+
+    req.on('error', function(e) {
+      should.not.exist(e);
+      done();
+    });
+
+    req.write('hello,wolrd', 'utf8');
+    req.end();
+  });
+
+  it('put with getSignedUrl (sign url), expired', function(done) {
+    var urlObj = oss.getSignedUrl({
+      method: 'PUT',
+      bucket: bucket,
+      object: object,
+      headers: {},
+      signHeaders: false,
+      expires: 1,
+    });
+
+    var options = Object.assign(url.parse(urlObj.url), {
+      headers: urlObj.headers,
+      method: 'PUT',
+    });
+
+    setTimeout(function() {
+      var req = http.request(options, function(res) {
+        res.statusCode.should.equal(403);
+        res.on('data', function() {});
+        res.on('end', function() {
+          done();
+        });
+      });
+
+      req.on('error', function(e) {
+        should.not.exist(e);
+        done();
+      });
+      req.write('hello,wolrd', 'utf8');
+      req.end();
+    }, 3000);
   });
 
   it('get object no dest', function(done) {
