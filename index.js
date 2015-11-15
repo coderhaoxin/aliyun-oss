@@ -58,27 +58,58 @@ OSS.prototype.generateSign = function(req, resource, signOnly) {
 /**
  * @param {object} - options
  *   required properties: method, bucket, object, headers
+ *   optional properties: signHeaders, expires
+ *
+ *   signHeaders - If truthy, put signature in the header, else put
+ *                 put signature in the URL. (default: true)
+ *
+ *   expires     - seconds until the signed URL will expire. Applies only
+ *                 if signHeaders is false. (default: 600 secs)
+ *
  */
 OSS.prototype.getSignedUrl = function(options) {
-  var headers = Object.assign({}, options.headers);
-  headers['Date'] = new Date().toGMTString();
+  var signHeaders = ('signHeaders' in options) ? options.signHeaders : true;
 
-  // Create a req object with properties expected by helper functions
+  var now = new Date();
+
+  // Create req objects with properties expected by helper functions
+  var reqHeaders = Object.assign({}, options.headers);
+  if (signHeaders) {
+    // Use date when signing headers
+    reqHeaders['Date'] = now.toUTCString();
+  } else {
+    // Use expires time (seconds from epoch) when signing the URL
+    var expires = ('expires' in options) ? options.expires : 600;
+    reqHeaders['Expires'] = Math.ceil(now.getTime() / 1000 + expires);
+  }
   var req = {
     method: options.method,
-    getHeader: function(key) { return headers[key]; },
-    _headers: headers
+    getHeader: function(key) { return reqHeaders[key]; },
+    _headers: reqHeaders
   };
 
-  // Sign headers
-  headers['Authorization'] = this.generateSign(req, getResource(options));
+  // Calculate URL components
+  var headers = {};
+  var queryParams = {};
+  if (signHeaders) {
+    var signature = this.generateSign(req, getResource(options), false);
+    headers = Object.assign(headers, options.headers);
+    headers['Date'] = reqHeaders['Date'];
+    headers['Authorization'] = signature;
+  } else {
+    var signature = this.generateSign(req, getResource(options), true);
+    queryParams['OSSAccessKeyId'] = this.accessKeyId;
+    queryParams['Expires'] = reqHeaders['Expires'];
+    queryParams['Signature'] = signature;
+  }
 
   // Generate URL
   var urlString = url.format({
     protocol: 'http:',
     hostname: options.bucket + '.' + this.host,
     port: this.port,
-    pathname: getPath(options)
+    pathname: getPath(options),
+    query: queryParams,
   });
 
   return { url: urlString, headers: headers };
