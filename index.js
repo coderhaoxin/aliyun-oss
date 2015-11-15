@@ -28,15 +28,18 @@ function OSS(options) {
 }
 
 /**
+ * Generate Authorization header signature, or raw signature (if signOnly is true)
+ *
  * @param {Request} - req
  * @param {string} - resource
+ * @param {boolean} - signOnly (optional, default: false)
  */
-OSS.prototype.generateSign = function(req, resource) {
+OSS.prototype.generateSign = function(req, resource, signOnly) {
   var params = [];
   params.push(req.method);
   params.push(req.getHeader('Content-Md5') || '');
   params.push(req.getHeader('Content-Type') || '');
-  params.push(req.getHeader('Date') || '');
+  params.push(req.getHeader('Date') || req.getHeader('Expires') || '');
 
   var keys = Object.keys(req._headers).sort();
   for (var i = 0; i < keys.length; i++) {
@@ -49,7 +52,7 @@ OSS.prototype.generateSign = function(req, resource) {
 
   var signature = crypto.createHmac('sha1', this.accessKeySecret).update(params.join('\n')).digest('base64');
 
-  return 'OSS ' + this.accessKeyId + ':' + signature;
+  return signOnly ? signature : 'OSS ' + this.accessKeyId + ':' + signature;
 };
 
 /**
@@ -102,7 +105,7 @@ OSS.prototype.setHeaders = function(req, options) {
   }
 
   var resource = getResource(options);
-  req.setHeader('Authorization', this.generateSign(req, resource));
+  req.setHeader('Authorization', this.generateSign(req, resource, false));
 };
 
 /**
