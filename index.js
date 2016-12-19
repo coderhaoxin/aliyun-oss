@@ -39,7 +39,7 @@ OSS.prototype.generateSign = function(req, resource, signOnly) {
   params.push(req.method);
   params.push(req.getHeader('Content-Md5') || '');
   params.push(req.getHeader('Content-Type') || '');
-  params.push(req.getHeader('Date') || req.getHeader('Expires') || '');
+  params.push(req.getHeader('Date') || req.getHeader('Expires') || (req.getHeader('Date') === '' ? '' : new Date().toUTCString()));
 
   var keys = Object.keys(req._headers).sort();
   for (var i = 0; i < keys.length; i++) {
@@ -97,6 +97,7 @@ OSS.prototype.getSignedUrl = function(options) {
     headers['Date'] = reqHeaders['Date'];
     headers['Authorization'] = signature;
   } else {
+    reqHeaders['Date'] = '';
     var signature = this.generateSign(req, getResource(options), true);
     queryParams['OSSAccessKeyId'] = this.accessKeyId;
     queryParams['Expires'] = reqHeaders['Expires'];
@@ -193,7 +194,7 @@ OSS.prototype.request = function(method, options, callback) {
         return;
       }
 
-      response.body = Buffer.concat(chunks, size);
+      response.body = new Buffer(chunks.join(''));
 
       if (!size || res.headers['content-type'] !== 'application/xml') {
         return callback(null, response);
@@ -227,6 +228,8 @@ OSS.prototype.request = function(method, options, callback) {
       });
     });
   });
+
+  req.method = method;
 
   self.setHeaders(req, options);
 
