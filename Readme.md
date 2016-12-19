@@ -190,6 +190,16 @@ var oss = OSS.createClient(option);
 yield oss.listBucket();
 ```
 
+### with `webpack`
+add node stuff in your webpack.config.js
+```js
+{
+  node: {
+    "fs": "empty"
+  }
+}
+```
+
 ### test
 Coverage: 96%
 
