@@ -189,6 +189,7 @@ oss.setBucketAcl({
 ```
 
 ### use with `co` or `koa`
+### with webpack
 
 ```js
 var option = {
@@ -202,21 +203,22 @@ var oss = OSS.createClient(option);
 // in co or koa
 yield oss.listBucket();
 ```
+add node stuff in your `webpack.config.js`
 
-### with `webpack`
-add node stuff in your webpack.config.js
 ```js
 {
   node: {
-    "fs": "empty"
+    fs: 'empty'
   }
 }
 ```
 
 ### test
+
 Coverage: 96%
 
 ### License
+
 MIT
 
 [npm-img]: https://img.shields.io/npm/v/aliyun-oss.svg?style=flat-square
