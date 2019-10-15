@@ -5,7 +5,6 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha -R spec -t 5000 test/*.js",
-    "test-cov": "istanbul cover node_modules/.bin/_mocha -- -R dot -t 5000 test/*.js",
     "fmt": "prettier --write \"test/**/*.js\" \"*.js\""
   },
   "repository": "haoxins/aliyun-oss",
@@ -25,7 +24,6 @@
     "xml2js": "^0.4.22"
   },
   "devDependencies": {
-    "istanbul": "^0.4.5",
     "mocha": "^6.2.1",
     "prettier": "^1.18.2",
     "should": "^13.2.3"

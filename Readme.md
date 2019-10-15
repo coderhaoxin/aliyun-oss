@@ -200,10 +200,6 @@ add node stuff in your `webpack.config.js`
 }
 ```
 
-### test
-
-Coverage: 96%
-
 ### License
 
 MIT
