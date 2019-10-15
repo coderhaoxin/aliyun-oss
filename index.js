@@ -42,10 +42,11 @@ OSS.prototype.generateSign = function(req, resource, signOnly) {
   params.push(req.getHeader('Content-Type') || '');
   params.push(req.getHeader('Date') || req.getHeader('Expires') || (req.getHeader('Date') === '' ? '' : new Date().toUTCString()));
 
-  var keys = Object.keys(req._headers).sort();
+  const headers = req.getHeaders()
+  var keys = Object.keys(headers).sort();
   for (var i = 0; i < keys.length; i++) {
     if (keys[i].toLowerCase().indexOf('x-oss') !== -1) {
-      params.push(keys[i].toLowerCase() + ':' + req._headers[keys[i]]);
+      params.push(keys[i].toLowerCase() + ':' + headers[keys[i]]);
     }
   }
 
