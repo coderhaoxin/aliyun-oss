@@ -1,4 +1,4 @@
-'use strict';
+'use strict'
 
 const { promisify } = require('util')
 var mime = require('mime-types'),
@@ -8,23 +8,23 @@ var mime = require('mime-types'),
   xml2js = require('xml2js'),
   http = require('http'),
   url = require('url'),
-  fs = require('fs');
+  fs = require('fs')
 
-var isArray = Array.isArray;
+var isArray = Array.isArray
 
 function OSS(options) {
-  this.accessKeyId = options.accessKeyId;
-  this.accessKeySecret = options.accessKeySecret;
-  this.host = options.host || 'oss-cn-hangzhou.aliyuncs.com';
-  this.port = options.port || 80;
-  this.timeout = options.timeout || 300000; // 5 minutes
+  this.accessKeyId = options.accessKeyId
+  this.accessKeySecret = options.accessKeySecret
+  this.host = options.host || 'oss-cn-hangzhou.aliyuncs.com'
+  this.port = options.port || 80
+  this.timeout = options.timeout || 300000 // 5 minutes
 
   if (options.hasOwnProperty('agent')) {
-    this.agent = options.agent;
+    this.agent = options.agent
   } else {
-    var agent = new http.Agent();
-    agent.maxSockets = 20;
-    this.agent = agent;
+    var agent = new http.Agent()
+    agent.maxSockets = 20
+    this.agent = agent
   }
 }
 
@@ -36,26 +36,33 @@ function OSS(options) {
  * @param {boolean} - signOnly (optional, default: false)
  */
 OSS.prototype.generateSign = function(req, resource, signOnly) {
-  var params = [];
-  params.push(req.method);
-  params.push(req.getHeader('Content-Md5') || '');
-  params.push(req.getHeader('Content-Type') || '');
-  params.push(req.getHeader('Date') || req.getHeader('Expires') || (req.getHeader('Date') === '' ? '' : new Date().toUTCString()));
+  var params = []
+  params.push(req.method)
+  params.push(req.getHeader('Content-Md5') || '')
+  params.push(req.getHeader('Content-Type') || '')
+  params.push(
+    req.getHeader('Date') ||
+      req.getHeader('Expires') ||
+      (req.getHeader('Date') === '' ? '' : new Date().toUTCString()),
+  )
 
   const headers = req.getHeaders()
-  var keys = Object.keys(headers).sort();
+  var keys = Object.keys(headers).sort()
   for (var i = 0; i < keys.length; i++) {
     if (keys[i].toLowerCase().indexOf('x-oss') !== -1) {
-      params.push(keys[i].toLowerCase() + ':' + headers[keys[i]]);
+      params.push(keys[i].toLowerCase() + ':' + headers[keys[i]])
     }
   }
 
-  params.push(resource);
+  params.push(resource)
 
-  var signature = crypto.createHmac('sha1', this.accessKeySecret).update(params.join('\n')).digest('base64');
+  var signature = crypto
+    .createHmac('sha1', this.accessKeySecret)
+    .update(params.join('\n'))
+    .digest('base64')
 
-  return signOnly ? signature : 'OSS ' + this.accessKeyId + ':' + signature;
-};
+  return signOnly ? signature : 'OSS ' + this.accessKeyId + ':' + signature
+}
 
 /**
  * @param {object} - options
@@ -70,40 +77,42 @@ OSS.prototype.generateSign = function(req, resource, signOnly) {
  *
  */
 OSS.prototype.getSignedUrl = function(options) {
-  var signHeaders = ('signHeaders' in options) ? options.signHeaders : true;
+  var signHeaders = 'signHeaders' in options ? options.signHeaders : true
 
-  var now = new Date();
+  var now = new Date()
 
   // Create req objects with properties expected by helper functions
-  var reqHeaders = Object.assign({}, options.headers);
+  var reqHeaders = Object.assign({}, options.headers)
   if (signHeaders) {
     // Use date when signing headers
-    reqHeaders['Date'] = now.toUTCString();
+    reqHeaders['Date'] = now.toUTCString()
   } else {
     // Use expires time (seconds from epoch) when signing the URL
-    var expires = ('expires' in options) ? options.expires : 600;
-    reqHeaders['Expires'] = Math.ceil(now.getTime() / 1000 + expires);
+    var expires = 'expires' in options ? options.expires : 600
+    reqHeaders['Expires'] = Math.ceil(now.getTime() / 1000 + expires)
   }
   var req = {
     method: options.method,
-    getHeader: function(key) { return reqHeaders[key]; },
-    _headers: reqHeaders
-  };
+    getHeader: function(key) {
+      return reqHeaders[key]
+    },
+    _headers: reqHeaders,
+  }
 
   // Calculate URL components
-  var headers = {};
-  var queryParams = {};
+  var headers = {}
+  var queryParams = {}
   if (signHeaders) {
-    var signature = this.generateSign(req, getResource(options), false);
-    headers = Object.assign(headers, options.headers);
-    headers['Date'] = reqHeaders['Date'];
-    headers['Authorization'] = signature;
+    var signature = this.generateSign(req, getResource(options), false)
+    headers = Object.assign(headers, options.headers)
+    headers['Date'] = reqHeaders['Date']
+    headers['Authorization'] = signature
   } else {
-    reqHeaders['Date'] = '';
-    var signature = this.generateSign(req, getResource(options), true);
-    queryParams['OSSAccessKeyId'] = this.accessKeyId;
-    queryParams['Expires'] = reqHeaders['Expires'];
-    queryParams['Signature'] = signature;
+    reqHeaders['Date'] = ''
+    var signature = this.generateSign(req, getResource(options), true)
+    queryParams['OSSAccessKeyId'] = this.accessKeyId
+    queryParams['Expires'] = reqHeaders['Expires']
+    queryParams['Signature'] = signature
   }
 
   // Generate URL
@@ -113,9 +122,9 @@ OSS.prototype.getSignedUrl = function(options) {
     port: this.port,
     pathname: getPath(options),
     query: queryParams,
-  });
+  })
 
-  return { url: urlString, headers: headers };
+  return { url: urlString, headers: headers }
 }
 
 /**
@@ -123,24 +132,27 @@ OSS.prototype.getSignedUrl = function(options) {
  * @param {object} - options
  */
 OSS.prototype.setHeaders = function(req, options) {
-  req.setHeader('Date', new Date().toGMTString());
+  req.setHeader('Date', new Date().toGMTString())
 
   if (options.source) {
-    var contentType = mime.lookup(options.source);
+    var contentType = mime.lookup(options.source)
 
     if (contentType && !req.getHeader('Content-Type')) {
-      req.setHeader('Content-Type', contentType);
+      req.setHeader('Content-Type', contentType)
     }
     // buffer
     if (Buffer.isBuffer(options.source)) {
-      req.setHeader['Content-Length'] = options.source.length;
-      req.setHeader['Content-Md5'] = crypto.createHash('md5').update(options.source).digest('base64');
+      req.setHeader['Content-Length'] = options.source.length
+      req.setHeader['Content-Md5'] = crypto
+        .createHash('md5')
+        .update(options.source)
+        .digest('base64')
     }
   }
 
-  var resource = getResource(options);
-  req.setHeader('Authorization', this.generateSign(req, resource, false));
-};
+  var resource = getResource(options)
+  req.setHeader('Authorization', this.generateSign(req, resource, false))
+}
 
 /**
  * @param {string} - method
@@ -148,189 +160,195 @@ OSS.prototype.setHeaders = function(req, options) {
  * @param {function} - callback
  */
 OSS.prototype.request = function(method, options, callback) {
-  var self = this;
-  var headers = options.headers || {};
-  var path = getPath(options);
-  var host = self.host;
+  var self = this
+  var headers = options.headers || {}
+  var path = getPath(options)
+  var host = self.host
   if (options.bucket) {
-    host = options.bucket + '.' + host;
+    host = options.bucket + '.' + host
   }
 
-  var req = http.request({
-    method: method,
-    host: host,
-    port: self.port,
-    path: path,
-    headers: headers,
-    timeout: self.timeout,
-    agent: self.agent
-  }, function(res) {
-    var response = {};
-    response.status = res.statusCode;
-    response.headers = res.headers;
+  var req = http.request(
+    {
+      method: method,
+      host: host,
+      port: self.port,
+      path: path,
+      headers: headers,
+      timeout: self.timeout,
+      agent: self.agent,
+    },
+    function(res) {
+      var response = {}
+      response.status = res.statusCode
+      response.headers = res.headers
 
-    var chunks = [],
-      size = 0;
+      var chunks = [],
+        size = 0
 
-    if (options.dest) {
-      var wstream = (typeof options.dest === 'string') ? fs.createWriteStream(options.dest) : options.dest;
-      res.pipe(wstream);
-
-      wstream.on('finish', function() {
-        callback(null, response);
-      });
-
-      wstream.on('error', function(error) {
-        callback(error);
-      });
-    } else {
-      res.on('data', function(chunk) {
-        chunks.push(chunk);
-        size += chunk.length;
-      });
-    }
-
-    res.on('end', function() {
       if (options.dest) {
-        // callback when wstream finish
-        return;
+        var wstream =
+          typeof options.dest === 'string'
+            ? fs.createWriteStream(options.dest)
+            : options.dest
+        res.pipe(wstream)
+
+        wstream.on('finish', function() {
+          callback(null, response)
+        })
+
+        wstream.on('error', function(error) {
+          callback(error)
+        })
+      } else {
+        res.on('data', function(chunk) {
+          chunks.push(chunk)
+          size += chunk.length
+        })
       }
 
-      response.body = new Buffer(chunks.join(''));
-
-      if (!size || res.headers['content-type'] !== 'application/xml') {
-        return callback(null, response);
-      }
-
-      var parser = new xml2js.Parser();
-      parser.parseString(response.body, function(error, result) {
-        if (error) {
-          error.status = response.status;
-          error.code = 'XML Parse Error';
-          return callback(error);
+      res.on('end', function() {
+        if (options.dest) {
+          // callback when wstream finish
+          return
         }
 
-        if (res.statusCode >= 400) {
-          error = new Error();
+        response.body = new Buffer(chunks.join(''))
 
-          try {
-            error.status = response.status;
-            error.code = result.Error.Code;
-            error.message = result.Error.Message;
-            error.requestId = result.Error.RequestId;
-          } catch (e) {
-            error = e;
+        if (!size || res.headers['content-type'] !== 'application/xml') {
+          return callback(null, response)
+        }
+
+        var parser = new xml2js.Parser()
+        parser.parseString(response.body, function(error, result) {
+          if (error) {
+            error.status = response.status
+            error.code = 'XML Parse Error'
+            return callback(error)
           }
 
-          return callback(error);
-        }
+          if (res.statusCode >= 400) {
+            error = new Error()
 
-        response.body = result;
-        callback(null, response);
-      });
-    });
-  });
+            try {
+              error.status = response.status
+              error.code = result.Error.Code
+              error.message = result.Error.Message
+              error.requestId = result.Error.RequestId
+            } catch (e) {
+              error = e
+            }
 
-  req.method = method;
+            return callback(error)
+          }
 
-  self.setHeaders(req, options);
+          response.body = result
+          callback(null, response)
+        })
+      })
+    },
+  )
+
+  req.method = method
+
+  self.setHeaders(req, options)
 
   req.on('error', function(error) {
-    callback(error);
-  });
+    callback(error)
+  })
 
   // http req body
   if (options.source) {
     if (options.source instanceof Stream) {
-      options.source.pipe(req);
+      options.source.pipe(req)
     } else if (typeof options.source === 'string') {
-      dealSourceWithFilePath(options.source);
+      dealSourceWithFilePath(options.source)
     } else if (Buffer.isBuffer(options.source)) {
-      req.end(options.source);
+      req.end(options.source)
     } else {
-      req.end();
+      req.end()
     }
   } else if (options.body) {
-    req.end(options.body);
+    req.end(options.body)
   } else {
-    req.end();
+    req.end()
   }
 
   function dealSourceWithFilePath(filepath) {
     fs.stat(filepath, function(error, stats) {
       if (error) {
-        callback(error);
+        callback(error)
       } else {
-        req.setHeader('Content-Length', stats.size);
-        fs.createReadStream(filepath).pipe(req);
+        req.setHeader('Content-Length', stats.size)
+        fs.createReadStream(filepath).pipe(req)
       }
-    });
+    })
   }
-};
+}
 
 /**
  * @param {function} - callback
  */
 OSS.prototype.listBucket = function(callback) {
-  callback = callback || noop;
+  callback = callback || noop
   var options = {
-    bucket: ''
-  };
+    bucket: '',
+  }
 
-  this.request('GET', options, callback);
-};
+  this.request('GET', options, callback)
+}
 
 /**
  * @param {object} - { bucket: string, acl: string }
  */
 OSS.prototype.createBucket = function(options, callback) {
-  options = options || {};
-  callback = callback || noop;
+  options = options || {}
+  callback = callback || noop
 
   if (options.acl) {
     options.headers = {
-      'x-oss-acl': options.acl
-    };
+      'x-oss-acl': options.acl,
+    }
   }
 
-  this.request('PUT', options, callback);
-};
+  this.request('PUT', options, callback)
+}
 
 /**
  * @param {object} - { bucket: string }
  */
 OSS.prototype.deleteBucket = function(options, callback) {
-  options = options || {};
-  callback = callback || noop;
+  options = options || {}
+  callback = callback || noop
 
-  this.request('DELETE', options, callback);
-};
+  this.request('DELETE', options, callback)
+}
 
 /**
  * @param {object} - { bucket: string }
  */
 OSS.prototype.getBucketAcl = function(options, callback) {
-  options = options || {};
-  callback = callback || noop;
+  options = options || {}
+  callback = callback || noop
 
-  options.isAcl = true;
+  options.isAcl = true
 
-  this.request('GET', options, callback);
-};
+  this.request('GET', options, callback)
+}
 
 /**
  * @param {object} - { bucket: string, acl: string }
  */
 OSS.prototype.setBucketAcl = function(options, callback) {
-  options = options || {};
-  callback = callback || noop;
+  options = options || {}
+  callback = callback || noop
 
   options.headers = {
-    'x-oss-acl': options.acl
-  };
+    'x-oss-acl': options.acl,
+  }
 
-  this.request('PUT', options, callback);
-};
+  this.request('PUT', options, callback)
+}
 
 /**
  * @param {object} - { bucket: string, object: string, source: string|stream|buffer, headers: object }
@@ -341,49 +359,52 @@ OSS.prototype.setBucketAcl = function(options, callback) {
  * }
  */
 OSS.prototype.putObject = function(options, callback) {
-  options = options || {};
-  callback = callback || noop;
+  options = options || {}
+  callback = callback || noop
 
-  var host = this.host;
+  var host = this.host
 
   this.request('PUT', options, function(error, result) {
     if (error) {
-      return callback(error);
+      return callback(error)
     }
-    result.objectUrl = 'http://' + options.bucket + '.' + host + '/' + options.object;
-    callback(null, result);
-  });
-};
+    result.objectUrl =
+      'http://' + options.bucket + '.' + host + '/' + options.object
+    callback(null, result)
+  })
+}
 
 /**
  * @param {object} - { bucket: string, object: string, sourceBucket: string, sourceObject: string }
  */
 OSS.prototype.copyObject = function(options, callback) {
-  options = options || {};
-  callback = callback || noop;
-  options.headers = options.headers || {};
-  options.headers['x-oss-copy-source'] = '/' + options.sourceBucket + '/' + options.sourceObject;
+  options = options || {}
+  callback = callback || noop
+  options.headers = options.headers || {}
+  options.headers['x-oss-copy-source'] =
+    '/' + options.sourceBucket + '/' + options.sourceObject
 
-  var host = this.host;
+  var host = this.host
 
   this.request('PUT', options, function(error, result) {
     if (error) {
-      return callback(error);
+      return callback(error)
     }
-    result.objectUrl = 'http://' + options.bucket + '.' + host + '/' + options.object;
-    callback(null, result);
-  });
-};
+    result.objectUrl =
+      'http://' + options.bucket + '.' + host + '/' + options.object
+    callback(null, result)
+  })
+}
 
 /**
  * @param {object} - { bucket: string, object: string }
  */
 OSS.prototype.deleteObject = function(options, callback) {
-  options = options || {};
-  callback = callback || noop;
+  options = options || {}
+  callback = callback || noop
 
-  this.request('DELETE', options, callback);
-};
+  this.request('DELETE', options, callback)
+}
 
 /**
  * put multi objects
@@ -391,93 +412,98 @@ OSS.prototype.deleteObject = function(options, callback) {
  * @param {object} - { bucket: string, quiet: boolean, objects: []string }
  */
 OSS.prototype.deleteObjects = function(options, callback) {
-  callback = callback || noop;
+  callback = callback || noop
 
   if (!(options && isArray(options.objects) && options.objects.length)) {
-    return callback(new Error('invalid options'));
+    return callback(new Error('invalid options'))
   }
 
-  options.isDel = true;
+  options.isDel = true
 
   var xml = '<?xml version="1.0" encoding="UTF-8"?><Delete>',
-    end = '</Delete>';
+    end = '</Delete>'
 
   if (options.quiet) {
-    xml += '<Quiet>true</Quiet>';
+    xml += '<Quiet>true</Quiet>'
   } else {
-    xml += '<Quiet>false</Quiet>';
+    xml += '<Quiet>false</Quiet>'
   }
 
   options.objects.forEach(function(object) {
-    xml += '<Object><Key>' + object + '</Key></Object>';
-  });
-  xml += end;
+    xml += '<Object><Key>' + object + '</Key></Object>'
+  })
+  xml += end
 
   // body
-  options.body = xml;
+  options.body = xml
 
-  var md5 = crypto.createHash('md5').update(xml).digest('base64'),
-    length = Buffer.byteLength(xml);
+  var md5 = crypto
+      .createHash('md5')
+      .update(xml)
+      .digest('base64'),
+    length = Buffer.byteLength(xml)
 
   // headers
   options.headers = {
     'Content-Md5': md5,
-    'Content-Length': length
-  };
+    'Content-Length': length,
+  }
 
-  this.request('POST', options, callback);
-};
+  this.request('POST', options, callback)
+}
 
 /**
  * @param {object} - { bucket: string, object: string, dest: string|stream, headers: object }
  */
 OSS.prototype.getObject = function(options, callback) {
-  options = options || {};
-  callback = callback || noop;
+  options = options || {}
+  callback = callback || noop
 
-  this.request('GET', options, callback);
-};
+  this.request('GET', options, callback)
+}
 
 /**
  * @param {object} - { bucket: string, object: string }
  */
 OSS.prototype.headObject = function(options, callback) {
-  options = options || {};
-  callback = callback || noop;
+  options = options || {}
+  callback = callback || noop
 
-  this.request('HEAD', options, callback);
-};
+  this.request('HEAD', options, callback)
+}
 
 /**
  * @param {object} - { bucket: string, prefix: string, marker: string, delimiter: string, maxKeys: number }
  */
 OSS.prototype.getBucket = function(options, callback) {
-  options = options || {};
-  callback = callback || noop;
+  options = options || {}
+  callback = callback || noop
 
-  this.request('GET', options, callback);
-};
+  this.request('GET', options, callback)
+}
 
 OSS.prototype.listObject = function(options, callback) {
-  options = options || {};
-  callback = callback || noop;
+  options = options || {}
+  callback = callback || noop
 
-  this.request('GET', options, callback);
-};
+  this.request('GET', options, callback)
+}
 
 /**
  * exports
  */
 exports.createClient = function(options) {
-  assert(typeof options === 'object', 'invalid options');
+  assert(typeof options === 'object', 'invalid options')
 
-  var _client = new OSS(options);
+  var _client = new OSS(options)
 
-  const client = {};
+  const client = {}
 
-  ['request', 'setHeaders', 'generateSign'].forEach(m => client[m] = _client[m]);
+  ;['request', 'setHeaders', 'generateSign'].forEach(
+    m => (client[m] = _client[m]),
+  )
 
-  [
+  ;[
     'getSignedUrl',
     'listBucket',
     'createBucket',
@@ -491,13 +517,13 @@ exports.createClient = function(options) {
     'getObject',
     'headObject',
     'getBucket',
-    'listObject'
-  ].forEach((m) => {
+    'listObject',
+  ].forEach(m => {
     client[m] = promisify(_client[m])
-  });
+  })
 
-  return client;
-};
+  return client
+}
 
 /**
  * utils
@@ -505,51 +531,51 @@ exports.createClient = function(options) {
 function noop() {}
 
 function getResource(options) {
-  var resource = '';
+  var resource = ''
 
   if (options.bucket) {
-    resource += '/' + options.bucket;
+    resource += '/' + options.bucket
   }
   if (options.object) {
-    resource += '/' + options.object;
+    resource += '/' + options.object
   } else {
-    resource += '/';
+    resource += '/'
   }
 
-  if (options.isAcl) return resource += '?acl';
-  if (options.isDel) return resource += '?delete';
+  if (options.isAcl) return (resource += '?acl')
+  if (options.isDel) return (resource += '?delete')
 
-  return resource;
+  return resource
 }
 
 function getPath(options) {
-  var path = '';
+  var path = ''
 
   // get bucket acl
-  if (options.isAcl) return '/?acl';
+  if (options.isAcl) return '/?acl'
   // delete multi objects
-  if (options.isDel) return '/?delete';
+  if (options.isDel) return '/?delete'
 
   if (options.object) {
-    path += '/' + encodeURIComponent(options.object);
+    path += '/' + encodeURIComponent(options.object)
   }
 
-  var params = [];
+  var params = []
   if (options.prefix) {
-    params.push('prefix=' + encodeURIComponent(options.prefix));
+    params.push('prefix=' + encodeURIComponent(options.prefix))
   }
   if (options.marker) {
-    params.push('marker=' + encodeURIComponent(options.marker));
+    params.push('marker=' + encodeURIComponent(options.marker))
   }
   if (options.maxKeys) {
-    params.push('max-keys=' + options.maxKeys);
+    params.push('max-keys=' + options.maxKeys)
   }
   if (options.delimiter) {
-    params.push('delimiter=' + encodeURIComponent(options.delimiter));
+    params.push('delimiter=' + encodeURIComponent(options.delimiter))
   }
   if (params.length) {
-    path += '/?' + params.join('&');
+    path += '/?' + params.join('&')
   }
 
-  return path;
+  return path
 }
