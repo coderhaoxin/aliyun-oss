@@ -96,7 +96,7 @@ OSS.prototype.getSignedUrl = function(options) {
     getHeader: function(key) {
       return reqHeaders[key]
     },
-    _headers: reqHeaders,
+    getHeaders: () => reqHeaders,
   }
 
   // Calculate URL components
@@ -289,19 +289,19 @@ OSS.prototype.request = function(method, options, callback) {
 /**
  * @param {function} - callback
  */
-OSS.prototype.listBucket = function(callback) {
+OSS.prototype.listBucket = promisify(function(callback) {
   callback = callback || noop
   var options = {
     bucket: '',
   }
 
   this.request('GET', options, callback)
-}
+})
 
 /**
  * @param {object} - { bucket: string, acl: string }
  */
-OSS.prototype.createBucket = function(options, callback) {
+OSS.prototype.createBucket = promisify(function(options, callback) {
   options = options || {}
   callback = callback || noop
 
@@ -312,34 +312,34 @@ OSS.prototype.createBucket = function(options, callback) {
   }
 
   this.request('PUT', options, callback)
-}
+})
 
 /**
  * @param {object} - { bucket: string }
  */
-OSS.prototype.deleteBucket = function(options, callback) {
+OSS.prototype.deleteBucket = promisify(function(options, callback) {
   options = options || {}
   callback = callback || noop
 
   this.request('DELETE', options, callback)
-}
+})
 
 /**
  * @param {object} - { bucket: string }
  */
-OSS.prototype.getBucketAcl = function(options, callback) {
+OSS.prototype.getBucketAcl = promisify(function(options, callback) {
   options = options || {}
   callback = callback || noop
 
   options.isAcl = true
 
   this.request('GET', options, callback)
-}
+})
 
 /**
  * @param {object} - { bucket: string, acl: string }
  */
-OSS.prototype.setBucketAcl = function(options, callback) {
+OSS.prototype.setBucketAcl = promisify(function(options, callback) {
   options = options || {}
   callback = callback || noop
 
@@ -348,7 +348,7 @@ OSS.prototype.setBucketAcl = function(options, callback) {
   }
 
   this.request('PUT', options, callback)
-}
+})
 
 /**
  * @param {object} - { bucket: string, object: string, source: string|stream|buffer, headers: object }
@@ -358,7 +358,7 @@ OSS.prototype.setBucketAcl = function(options, callback) {
  *   'Content-Length': 1024
  * }
  */
-OSS.prototype.putObject = function(options, callback) {
+OSS.prototype.putObject = promisify(function(options, callback) {
   options = options || {}
   callback = callback || noop
 
@@ -372,12 +372,12 @@ OSS.prototype.putObject = function(options, callback) {
       'http://' + options.bucket + '.' + host + '/' + options.object
     callback(null, result)
   })
-}
+})
 
 /**
  * @param {object} - { bucket: string, object: string, sourceBucket: string, sourceObject: string }
  */
-OSS.prototype.copyObject = function(options, callback) {
+OSS.prototype.copyObject = promisify(function(options, callback) {
   options = options || {}
   callback = callback || noop
   options.headers = options.headers || {}
@@ -394,24 +394,24 @@ OSS.prototype.copyObject = function(options, callback) {
       'http://' + options.bucket + '.' + host + '/' + options.object
     callback(null, result)
   })
-}
+})
 
 /**
  * @param {object} - { bucket: string, object: string }
  */
-OSS.prototype.deleteObject = function(options, callback) {
+OSS.prototype.deleteObject = promisify(function(options, callback) {
   options = options || {}
   callback = callback || noop
 
   this.request('DELETE', options, callback)
-}
+})
 
 /**
  * put multi objects
  *
  * @param {object} - { bucket: string, quiet: boolean, objects: []string }
  */
-OSS.prototype.deleteObjects = function(options, callback) {
+OSS.prototype.deleteObjects = promisify(function(options, callback) {
   callback = callback || noop
 
   if (!(options && isArray(options.objects) && options.objects.length)) {
@@ -450,44 +450,44 @@ OSS.prototype.deleteObjects = function(options, callback) {
   }
 
   this.request('POST', options, callback)
-}
+})
 
 /**
  * @param {object} - { bucket: string, object: string, dest: string|stream, headers: object }
  */
-OSS.prototype.getObject = function(options, callback) {
+OSS.prototype.getObject = promisify(function(options, callback) {
   options = options || {}
   callback = callback || noop
 
   this.request('GET', options, callback)
-}
+})
 
 /**
  * @param {object} - { bucket: string, object: string }
  */
-OSS.prototype.headObject = function(options, callback) {
+OSS.prototype.headObject = promisify(function(options, callback) {
   options = options || {}
   callback = callback || noop
 
   this.request('HEAD', options, callback)
-}
+})
 
 /**
  * @param {object} - { bucket: string, prefix: string, marker: string, delimiter: string, maxKeys: number }
  */
-OSS.prototype.getBucket = function(options, callback) {
+OSS.prototype.getBucket = promisify(function(options, callback) {
   options = options || {}
   callback = callback || noop
 
   this.request('GET', options, callback)
-}
+})
 
-OSS.prototype.listObject = function(options, callback) {
+OSS.prototype.listObject = promisify(function(options, callback) {
   options = options || {}
   callback = callback || noop
 
   this.request('GET', options, callback)
-}
+})
 
 /**
  * exports
@@ -495,32 +495,7 @@ OSS.prototype.listObject = function(options, callback) {
 exports.createClient = function(options) {
   assert(typeof options === 'object', 'invalid options')
 
-  var _client = new OSS(options)
-
-  const client = {}
-
-  ;['request', 'setHeaders', 'generateSign'].forEach(
-    m => (client[m] = _client[m]),
-  )
-
-  ;[
-    'getSignedUrl',
-    'listBucket',
-    'createBucket',
-    'deleteBucket',
-    'getBucketAcl',
-    'setBucketAcl',
-    'putObject',
-    'copyObject',
-    'deleteObject',
-    'deleteObjects',
-    'getObject',
-    'headObject',
-    'getBucket',
-    'listObject',
-  ].forEach(m => {
-    client[m] = promisify(_client[m])
-  })
+  var client = new OSS(options)
 
   return client
 }
