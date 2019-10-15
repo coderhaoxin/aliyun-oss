@@ -1,7 +1,7 @@
 'use strict'
 
 var config = require('./config'),
-  uuid = require('node-uuid'),
+  uuid = require('uuid'),
   should = require('should'),
   OSS = require('..'),
   http = require('http'),

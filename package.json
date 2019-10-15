@@ -27,8 +27,8 @@
   "devDependencies": {
     "istanbul": "^0.4.5",
     "mocha": "^6.2.1",
-    "node-uuid": "^1.4.8",
     "prettier": "^1.18.2",
     "should": "^13.2.3"
+    "uuid": "^3.3.3"
   }
 }
