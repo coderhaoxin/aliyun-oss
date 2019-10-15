@@ -3,7 +3,8 @@
 [![Dependency status][david-img]][david-url]
 
 ### aliyun-oss
-node.js sdk for aliyun oss, friendly with **co**, **koa** ...
+
+* node.js sdk for aliyun oss.
 
 ```bash
 npm install aliyun-oss
@@ -14,11 +15,11 @@ npm install aliyun-oss
 
 ### how to use
 ```js
-var OSS = require('aliyun-oss');
-var option = {
+const OSS = require('aliyun-oss')
+const option = {
   accessKeyId: 'your access key id',
   accessKeySecret: 'your access key secret'
-};
+}
 
 /*
  * 可选 option
@@ -28,7 +29,7 @@ var option = {
  * agent:   default is: agent.maxSockets = 20
  */
 
-var oss = OSS.createClient(option);
+const oss = OSS.createClient(option)
 ```
 
 ### summary
@@ -48,7 +49,8 @@ callback params
 
 ### object
 
-创建object
+* 创建object
+
 ```js
 /*
  * source:  上传的文件, 可以是文件路径、 buffer、 stream
@@ -69,7 +71,8 @@ oss.putObject({
 });
 ```
 
-复制object
+* 复制 object
+
 ```js
 oss.copyObject({
   bucket: '',
@@ -79,7 +82,8 @@ oss.copyObject({
 }, function (err, res) {});
 ```
 
-删除object
+* 删除 object
+
 ```js
 oss.deleteObject({
   bucket: '',
@@ -87,7 +91,8 @@ oss.deleteObject({
 }, function (err, res) {});
 ```
 
-批量删除objects
+* 批量删除 objects
+
 ```js
 oss.deleteObjects({
   quiet: true, // optional, default is false
@@ -96,7 +101,8 @@ oss.deleteObjects({
 }, function (err, res) {});
 ```
 
-获取object
+* 获取 object
+
 ```js
 /*
  * dest: 保存object的文件路径 或者 writeStream
@@ -111,7 +117,8 @@ oss.getObject({
 }, function (err, res) {});
 ```
 
-获取object头信息
+* 获取 object 头信息
+
 ```js
 oss.headObject({
   bucket: '',
@@ -119,7 +126,8 @@ oss.headObject({
 }, function (err, res) {});
 ```
 
-获取object列表
+* 获取 object 列表
+
 ```js
 /*
  * prefix:    可选，object 前缀
@@ -140,12 +148,14 @@ oss.listObject({
 
 ### bucket
 
-列举bucket
+* 列举 bucket
+
 ```js
 oss.listBucket(function (err, res) {});
 ```
 
-创建bucket
+* 创建 bucket
+
 ```js
 oss.createBucket({
   bucket: '',
@@ -153,21 +163,24 @@ oss.createBucket({
 }, function (err, res) {});
 ```
 
-删除bucket
+* 删除 bucket
+
 ```js
 oss.deleteBucket({
   bucket: ''
 }, function (err, res) {});
 ```
 
-获取bucket访问规则
+* 获取 bucket 访问规则
+
 ```js
 oss.getBucketAcl({
   bucket: ''
 }, function (err, res) {});
 ```
 
-设置bucket访问规则
+* 设置 bucket 访问规则
+
 ```js
 oss.setBucketAcl({
   bucket: '',
