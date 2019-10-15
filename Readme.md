@@ -188,21 +188,8 @@ oss.setBucketAcl({
 }, function (err, res) {});
 ```
 
-### use with `co` or `koa`
 ### with webpack
 
-```js
-var option = {
-  wrapper: 'thunk', // or: promise
-  accessKeyId: '',
-  accessKeySecret: ''
-};
-
-var oss = OSS.createClient(option);
-
-// in co or koa
-yield oss.listBucket();
-```
 add node stuff in your `webpack.config.js`
 
 ```js
