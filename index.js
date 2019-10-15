@@ -1,5 +1,6 @@
 'use strict';
 
+const { promisify } = require('util')
 var mime = require('mime-types'),
   assert = require('assert'),
   crypto = require('crypto'),
@@ -469,12 +470,30 @@ OSS.prototype.listObject = function(options, callback) {
 exports.createClient = function(options) {
   assert(typeof options === 'object', 'invalid options');
 
-  var client = new OSS(options);
+  var _client = new OSS(options);
 
-  var wrapper = options.wrapper;
-  if (wrapper) {
-    require('thunkify-or-promisify')(client, wrapper, ['request', 'setHeaders', 'generateSign']);
-  }
+  const client = {};
+
+  ['request', 'setHeaders', 'generateSign'].forEach(m => client[m] = _client[m]);
+
+  [
+    'getSignedUrl',
+    'listBucket',
+    'createBucket',
+    'deleteBucket',
+    'getBucketAcl',
+    'setBucketAcl',
+    'putObject',
+    'copyObject',
+    'deleteObject',
+    'deleteObjects',
+    'getObject',
+    'headObject',
+    'getBucket',
+    'listObject'
+  ].forEach((m) => {
+    client[m] = promisify(_client[m])
+  });
 
   return client;
 };
