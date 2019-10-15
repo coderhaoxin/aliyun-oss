@@ -4,10 +4,10 @@
   "description": "a new version of oss-client",
   "main": "index.js",
   "scripts": {
-    "test": "node_modules/.bin/mocha --harmony -R spec -t 5000 test/*.js",
-    "test-cov": "node --harmony node_modules/.bin/istanbul cover node_modules/.bin/_mocha -- -R dot -t 5000 test/*.js"
+    "test": "mocha -R spec -t 5000 test/*.js",
+    "test-cov": "istanbul cover node_modules/.bin/_mocha -- -R dot -t 5000 test/*.js"
   },
-  "repository": "coderhaoxin/aliyun-oss",
+  "repository": "haoxins/aliyun-oss",
   "keywords": [
     "aliyun",
     "client",
@@ -20,15 +20,13 @@
   "author": "haoxin",
   "license": "MIT",
   "dependencies": {
-    "mime-types": "2",
-    "thunkify-or-promisify": "0",
-    "xml2js": "^0.4.15"
+    "mime-types": "^2.1.24",
+    "xml2js": "^0.4.22"
   },
   "devDependencies": {
-    "co": "4",
-    "istanbul-harmony": "0",
-    "mocha": "2",
-    "node-uuid": "1",
-    "should": "7"
+    "istanbul": "^0.4.5",
+    "mocha": "^6.2.1",
+    "node-uuid": "^1.4.8",
+    "should": "^13.2.3"
   }
 }
